@@ -8,16 +8,19 @@ import (
 )
 
 func main() {
-	// args := os.Args[1:]
-	// name := args[0]
-	// fmt.Printf("Helloka %s \n", name)
+	args := os.Args[1:]
 
-	simctl := iossimulator.Simctl{}
-	runtime, err := simctl.Runtime("13.5")
+	parameters, err := iossimulator.ParseParameters(args)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("Could not parse arguments %s \n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(runtime)
+	simctl := iossimulator.Simctl{}
+	if err := simctl.StartSimulator(*parameters); err != nil {
+		fmt.Printf("Failed to start simulator %s", err)
+		os.Exit(1)
+	}
+
+	os.Exit(0)
 }

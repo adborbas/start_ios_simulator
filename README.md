@@ -10,10 +10,6 @@ Create a CLI tool, which starts an iOS simulator based on the provided Simulator
 
 ## Commands
 
-### Start simulator
-
 `xcrun simctl boot BE53CBFF-4900-4F10-A1D4-B451AB4C9E7E`
-
-### Creating a simulator
-
-`xcrun simctl create My-iphone7 com.apple.CoreSimulator.SimDeviceType.iPhone-7 com.apple.CoreSimulator.SimRuntime.iOS-10–3`
+`xcrun simctl list --json runtimes 13.5`
+`xcrun simctl list --json devices "iPhone 8"`

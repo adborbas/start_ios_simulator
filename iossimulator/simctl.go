@@ -4,24 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 // Simctl ...
 type Simctl struct {
 }
 
-// AvailableDevices ...
-// func (sim Simctl) AvailableDevices() ([]string, error) {
-// 	rawList, err := sim.run("list")
-// 	if err != nil {
-// 		return []string{}, err
-// 	}
-
-// 	return strings.Split(rawList, "\n"), nil
-// }
-
 type runtimesResponse struct {
-	runtimes []Runtime `json:"runtimes"`
+	Runtimes []Runtime `json:"runtimes"`
 }
 
 // Runtime ...
@@ -36,21 +27,77 @@ func (sim Simctl) Runtime(version string) (*Runtime, error) {
 		return nil, err
 	}
 
-	for _, runtime := range response.runtimes {
-		if runtime.version == version {
+	for _, runtime := range response.Runtimes {
+		if runtime.Version == version {
 			return &runtime, nil
 		}
 	}
 
-	return nil, fmt.Errorf("%s not found", version)
+	return nil, fmt.Errorf("runtime %s not found", version)
 }
 
-// type devicesResponse struct {
-// 	devices []Device
-// }
+type devicesResponse struct {
+	Devices map[string][]Device `json:"devices"`
+}
 
-func (sim Simctl) run(args ...string) (string, error) {
+// Device ...
+func (sim Simctl) Device(name string, runtime Runtime) (*Device, error) {
+	rawJSONString, err := sim.run("list", "--json", "devices", name)
+	if err != nil {
+		return nil, err
+	}
+
+	var response devicesResponse
+	if err = json.Unmarshal([]byte(rawJSONString), &response); err != nil {
+		return nil, err
+	}
+
+	for runtimeIdentifier, devices := range response.Devices {
+		if runtimeIdentifier != runtime.Identifier {
+			continue
+		}
+		for _, device := range devices {
+			if device.Name == name {
+				return &device, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("device %s not found", name)
+}
+
+// Boot ...
+func (sim Simctl) Boot(device Device) error {
+	if strings.ToLower(device.State) != "booted" {
+		_, err := sim.run("boot", device.Identifier)
+		if err != nil {
+			return err
+		}
+	}
+	_, err := exec.Command("open", "-a", "Simulator").CombinedOutput()
+	return err
+}
+
+// StartSimulator ...
+func (sim Simctl) StartSimulator(parameters StartSimulatorParameters) error {
+	runtime, err := sim.Runtime(parameters.Version)
+	if err != nil {
+		return err
+	}
+
+	foundDevice, err := sim.Device(parameters.Device, *runtime)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Starting simulator %s, %s \n", foundDevice.Name, runtime.Version)
+	if err := sim.Boot(*foundDevice); err != nil {
+		return fmt.Errorf("could not start simulator %s", err)
+	}
+
+	return nil
+}
+
+func (sim Simctl) run(args ...string) ([]byte, error) {
 	cmd := exec.Command("xcrun", append([]string{"simctl"}, args...)...)
-	outBytes, err := cmd.CombinedOutput()
-	return string(outBytes), err
+	return cmd.CombinedOutput()
 }

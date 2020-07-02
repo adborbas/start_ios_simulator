@@ -2,12 +2,14 @@ package iossimulator
 
 // Runtime ...
 type Runtime struct {
-	name       string `json:"name"`
-	version    string `json:"version"`
-	identifier string `json:"identifier"`
+	Name       string `json:"name"`
+	Version    string `json:"version"`
+	Identifier string `json:"identifier"`
 }
 
+// Device ...
 type Device struct {
-	name       string `json:"name"`
-	identifier string `json:"udid"`
+	State      string `json:"state"`
+	Name       string `json:"name"`
+	Identifier string `json:"udid"`
 }
