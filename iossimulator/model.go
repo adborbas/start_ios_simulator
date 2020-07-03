@@ -9,6 +9,7 @@ type Runtime struct {
 
 // Device ...
 type Device struct {
+	Runtime    Runtime
 	State      string `json:"state"`
 	Name       string `json:"name"`
 	Identifier string `json:"udid"`
